@@ -25,7 +25,7 @@ handleChange = evt => {
 postNewItem = () => {
   axios.post(URL, { name: this.state.inputValue })
   .then(res => {
-    this.getTodos()
+    this.setState({ ...this.state, todos: this.state.todos.concat(res.data.data)})
     this.resetForm();
   })
   .catch(err => {
@@ -54,25 +54,23 @@ getTodos = () => {
 }
 
 toggleItem = (itemId) => {
-  this.setState({
-    todos: this.state.todos.map(item => {
-      if(itemId === item.id){
-        return {
-          ...item,
-          completed: !item.completed
-          
-        }
-      }
-      return item;
+  axios.patch(`${URL}/${itemId}`)
+  .then(res => {
+    this.setState({ ...this.state, todos: this.state.todos.map(td => {
+      if(td.id !== itemId) return td
+      return res.data.data
+    })})
+  })
+  .catch(err => {
+    this.setState({
+      ...this.state, error: err.response.data.message
     })
   })
 }
 
 toggleCompleted = (evt) => {
   evt.preventDefault();
-  this.setState({
-    show: !this.show
-  })
+  this.setState({ ...this.state, show: !this.state.show})
 }
 
 componentDidMount() {
@@ -85,10 +83,10 @@ componentDidMount() {
         <div id='error'>Error: {this.state.error}</div>
         <div id='todos'>
           <h2>Todos: </h2>
-          <TodoList todos={this.state.todos} toggleItem={this.toggleItem}/>
+          <TodoList todos={this.state.todos} toggleItem={this.toggleItem} show={this.state.show}/>
           <Form addItem={this.addItem} inputValue={this.inputValue}
            handleSubmit={this.handleSubmit} handleChange={this.handleChange}/>
-          <button onClick={() => this.toggleCompleted()}>{this.state.show === true ? 'Hide Completed' : 'Show Completed'}</button>
+          <button onClick={this.toggleCompleted}>{this.state.show === true ? 'Hide Completed' : 'Show Completed'}</button>
         </div>
       </div>
       
